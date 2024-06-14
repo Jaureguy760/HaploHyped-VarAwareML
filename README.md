@@ -1,7 +1,6 @@
 # HaploHyped VarAwareML Pipeline
 <img src="https://github.com/Jaureguy760/HaploHyped-VarAwareML/blob/main/haplohyped.png" alt="HaploHyped VarAware ML PIPELINE Logo" width="400"/>
 
-
 The HaploHyped VarAwareML Pipeline is an integrated, end-to-end solution for processing genomic data, converting VCF files to HDF5 format, and performing GPU-accelerated on-the-fly haplotype encoding for machine learning.
 
 ## Features
@@ -56,59 +55,3 @@ You can run the pipeline using the command line interface with the following opt
 
 ```bash
 haplohyped convert --vcf data/example.vcf.gz --cohort_name YourStudy --outdir data/output
-```
-
-```
-haplohyped train --hdf5 data/output/genotype_data.h5 --bed data/example.bed --epochs 10 --batch_size 32
-```
-
-## Model Training
-
-###  VCF to H5
-```
-haplohyped convert --vcf data/example.vcf.gz --cohort_name YourStudy --outdir data/output
-
-```
-
-### Running Both Stages Sequentially
-
-```
-haplohyped convert --vcf data/example.vcf.gz --cohort_name YourStudy --outdir data/output
-haplohyped train --hdf5 data/output/genotype_data.h5 --bed data/example.bed --epochs 10 --batch_size 32
-```
-
-## Benchmarks and Profiling
-
-### Data Loading Benchmark
-```
-haplohyped benchmark-data-loading
-```
-
-### Encoding Benchmark
-```
-haplohyped benchmark-encoding
-```
-
-### Training Benchmark
-```
-haplohyped benchmark-training
-```
-
-### Profiling
-```
-haplohyped profile-pipeline
-```
-
-## Contributing
-```
-We welcome contributions to the HaploHyped VarAware ML PIPELINE! See CONTRIBUTING.md for more details.
-```
-
-## License
-```
-This project is licensed under the MIT License - see the LICENSE file for details.
-```
-## Contact
-```
-For questions or issues, please open an issue on GitHub.
-```
