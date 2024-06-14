@@ -1,5 +1,5 @@
 import os
-import pandas as pd
+import polars as pl
 import numpy as np
 import h5py
 from multiprocessing import Pool
@@ -27,7 +27,6 @@ def bitpack_indices(indices):
     Returns:
     np.array: Packed array of indices in 2-bit representation.
     """
-    # Pack indices into 2-bit representation
     packed = np.packbits(indices.reshape(-1, 4), axis=-1, bitorder='little')
     return packed
 
@@ -52,28 +51,28 @@ def probes_VCF2hdf5(data_path, save_path, study_name, chunk_size=100000):
         os.remove(h5_file)
 
     hash_table = {'keys': np.array([], dtype=np.int64), 'allele': np.array([], dtype='S')}
-    with pd.read_csv(data_path, sep='\t', chunksize=chunk_size, header=None, index_col=None) as df_chunks:
+    for chunk in pl.read_csv(data_path, sep='\t', chunksize=chunk_size, has_header=False):
         with h5py.File(h5_file, 'w') as hf:
-            for i, chunk in enumerate(df_chunks):
-                chunk.columns = ["CHR", "bp", "ID", 'allele1', 'allele2', 'QUAL', 'FILTER', 'INFO']
-                allele1_indices = chunk['allele1'].map({'A': 0, 'C': 1, 'G': 2, 'T': 3}).astype(np.int8)
-                allele2_indices = chunk['allele2'].map({'A': 0, 'C': 1, 'G': 2, 'T': 3}).astype(np.int8)
-                
-                # Bitpack the indices
-                packed_allele1 = bitpack_indices(allele1_indices)
-                packed_allele2 = bitpack_indices(allele2_indices)
-                
-                packed_chunk = np.column_stack((chunk[["CHR", "bp", "ID"]], packed_allele1, packed_allele2))
+            chunk = chunk.to_pandas()
+            chunk.columns = ["CHR", "bp", "ID", 'allele1', 'allele2', 'QUAL', 'FILTER', 'INFO']
+            allele1_indices = chunk['allele1'].map({'A': 0, 'C': 1, 'G': 2, 'T': 3}).astype(np.int8)
+            allele2_indices = chunk['allele2'].map({'A': 0, 'C': 1, 'G': 2, 'T': 3}).astype(np.int8)
+            
+            # Bitpack the indices
+            packed_allele1 = bitpack_indices(allele1_indices)
+            packed_allele2 = bitpack_indices(allele2_indices)
+            
+            packed_chunk = np.column_stack((chunk[["CHR", "bp", "ID"]], packed_allele1, packed_allele2))
 
-                if 'data' not in hf:
-                    maxshape = (None, packed_chunk.shape[1])
-                    # Using default chunking provided by HDF5
-                    dset = hf.create_dataset('data', data=packed_chunk, maxshape=maxshape, compression='lzf')
-                else:
-                    hf['data'].resize((hf['data'].shape[0] + packed_chunk.shape[0]), axis=0)
-                    hf['data'][-packed_chunk.shape[0]:] = packed_chunk
+            if 'data' not in hf:
+                maxshape = (None, packed_chunk.shape[1])
+                # Using default chunking provided by HDF5
+                dset = hf.create_dataset('data', data=packed_chunk, maxshape=maxshape, compression='lzf')
+            else:
+                hf['data'].resize((hf['data'].shape[0] + packed_chunk.shape[0]), axis=0)
+                hf['data'][-packed_chunk.shape[0]:] = packed_chunk
 
-    pd.DataFrame.from_dict(hash_table).to_csv(os.path.join(save_path, 'probes', study_name + '_hash_table.csv.gz'), index=False, compression='gzip', sep='\t')
+    pl.DataFrame(hash_table).write_csv(os.path.join(save_path, 'probes', study_name + '_hash_table.csv.gz'), compression='gzip')
 
 def ind_VCF2hdf5(data_path, save_path, study_name):
     """
@@ -94,8 +93,7 @@ def ind_VCF2hdf5(data_path, save_path, study_name):
     if os.path.isfile(h5_file):
         os.remove(h5_file)
 
-    with open(data_path, 'r') as f:
-        individuals = [line.strip() for line in f]
+    individuals = pl.read_csv(data_path, has_header=False).to_series(0).to_list()
     
     with h5py.File(h5_file, 'w') as hf:
         # Using default chunking provided by HDF5
@@ -118,7 +116,7 @@ def genotype_VCF2hdf5(data_path, id, save_path, study_name):
         print(f"{h5_file} is already up-to-date.")
         return
 
-    df = pd.read_csv(data_path, header=None, index_col=None, sep='\t', dtype=str)
+    df = pl.read_csv(data_path, has_header=False).to_pandas()
     data = df.to_numpy()
     
     with h5py.File(h5_file, 'w') as hf:
@@ -140,9 +138,9 @@ def process_chromosome(chromosome, vcf_dir, out_dir, study_name):
     vcf_file = os.path.join(vcf_dir, f'chr{chromosome}.filtered.vcf.gz')
     os.makedirs(out_dir, exist_ok=True)
     os.makedirs(os.path.join(out_dir, 'genotype'), exist_ok=True)
-    os.makedirs(os.path.join(out_dir, 'individuals'), exist.ok=True)
-    os.makedirs(os.path.join(out_dir, 'probes'), exist.ok=True)
-    os.makedirs(os.path.join(out_dir, 'tmp_files'), exist.ok=True)
+    os.makedirs(os.path.join(out_dir, 'individuals'), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, 'probes'), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, 'tmp_files'), exist_ok=True)
     
     probes_VCF2hdf5(vcf_file, out_dir, study_name, chunk_size=100000)  # Adjust chunk size here
     ind_VCF2hdf5(vcf_file, out_dir, study_name)
