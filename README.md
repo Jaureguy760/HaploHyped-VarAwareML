@@ -25,7 +25,7 @@ Follow these steps to install the HaploHyped VarAwareML Pipeline.
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/yourusername/HaploHyped-VarAwareML.git
+    git clone https://github.com/Jaureguy760/HaploHyped-VarAwareML.git
     cd HaploHyped-VarAwareML
     ```
 
