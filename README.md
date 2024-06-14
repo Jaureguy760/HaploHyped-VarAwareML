@@ -1,4 +1,6 @@
 # HaploHyped VarAwareML Pipeline
+![HaploHyped VarAware ML PIPELINE Logo](https://github.com/Jaureguy760/HaploHyped-VarAwareML/blob/main/haplohyped.png)
+
 
 The HaploHyped VarAwareML Pipeline is an integrated, end-to-end solution for processing genomic data, converting VCF files to HDF5 format, and performing GPU-accelerated on-the-fly haplotype encoding for machine learning.
 
