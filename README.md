@@ -47,7 +47,6 @@ Follow these steps to install the HaploHyped VarAwareML Pipeline.
    
     Follow the instructions on the [Nextflow website](https://www.nextflow.io/) to install Nextflow.
 ## Data Storage
-```
 
 ### Reading Data in Chunks
 ```
