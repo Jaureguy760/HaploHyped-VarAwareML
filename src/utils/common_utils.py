@@ -1,30 +1,63 @@
 import numpy as np
 
-def nucleotide_to_index(seq):
+def nucleotide_to_index(seq, encode_spec=None):
     """
     Convert a DNA sequence to integer indices.
     
     Parameters:
     seq (str): A string representing a DNA sequence.
+    encode_spec (dict, optional): Encoding specification for nucleotides. Defaults to None.
     
     Returns:
     np.array: An array of integers representing the indices of nucleotides.
     """
-    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
-    return np.array([mapping[nuc] for nuc in seq], dtype=np.int8)
+    if encode_spec is None:
+        encode_spec = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
+    return np.array([encode_spec.get(nuc, 4) for nuc in seq], dtype=np.int8)
 
 def bitpack_indices(indices):
     """
-    Pack nucleotide indices into a 2-bit representation.
+    Pack nucleotide indices into a 3-bit representation to include `N`.
+
+    Parameters:
+    indices (np.array): Array of nucleotide indices.
+
+    Returns:
+    np.array: Packed array of indices in 3-bit representation.
+    """
+    packed = np.packbits(indices.reshape(-1, 2), axis=-1, bitorder='little')
+    return packed
+
+
+def index_to_onehot(indices, encode_spec=None):
+    """
+    Convert nucleotide indices to one-hot encoding.
     
     Parameters:
     indices (np.array): Array of nucleotide indices.
+    encode_spec (dict, optional): Encoding specification for nucleotides. Defaults to None.
     
     Returns:
-    np.array: Packed array of indices in 2-bit representation.
+    np.array: One-hot encoded representation of the indices.
     """
-    packed = np.packbits(indices.reshape(-1, 4), axis=-1, bitorder='little')
-    return packed
+    if encode_spec is None:
+        encode_spec = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
+    num_classes = len(encode_spec)
+    return np.eye(num_classes)[indices]
+    
+def unpack_bits(packed_data):
+    """
+    Unpack 3-bit packed data back to nucleotide indices.
+    
+    Parameters:
+    packed_data (np.array): Packed array of nucleotide indices.
+    
+    Returns:
+    np.array: Unpacked array of nucleotide indices.
+    """
+    unpacked = np.unpackbits(packed_data, axis=-1, bitorder='little').reshape(-1, 2)
+    return unpacked
+
 
 def parse_encode_dict(encode_spec):
     """
