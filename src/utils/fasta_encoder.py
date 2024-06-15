@@ -14,24 +14,12 @@ class ReferenceGenome:
         with FastaFile(in_fasta) as fasta:
             for chrom in fasta.references:
                 fasta_seq = fasta.fetch(chrom).upper() if ignore_case else fasta.fetch(chrom)
-                onehot_dict[chrom] = self.encode_sequence(fasta_seq)
+                indices = self.nucleotide_to_index(fasta_seq)
+                packed_indices = self.bitpack_indices(indices)
+                onehot_dict[chrom] = packed_indices
         return onehot_dict
     
-    def encode_sequence(self, sequence):
-        seq_len = len(sequence)
-        encoded_seq = np.zeros((seq_len, len(self.encode_spec)), dtype=np.uint8)
-        for i, base in enumerate(sequence):
-            if base in self.encode_spec:
-                encoded_seq[i, self.encode_spec[base]] = 1
-        return encoded_seq
-    
     def save_to_h5(self, out_h5):
-        """
-        Save the encoded sequences to an HDF5 file.
-
-        Parameters:
-        out_h5 (str): Path to the output HDF5 file.
-        """
         with h5py.File(out_h5, 'w') as f:
             for chrom, encoded_seq in self.onehot_dict.items():
                 f.create_dataset(chrom, data=encoded_seq, compression='lzf')
