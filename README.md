@@ -46,7 +46,31 @@ Follow these steps to install the HaploHyped VarAwareML Pipeline.
 4. Install Nextflow:
    
     Follow the instructions on the [Nextflow website](https://www.nextflow.io/) to install Nextflow.
+## Data Storage
+```
 
+### Reading Data in Chunks
+```
+The data is read from VCF files in chunks to manage memory usage efficiently.
+Each chunk is processed individually.
+```
+### Nucleotide Encoding
+```
+Nucleotides are mapped to integer indices using int8 type. For example:
+'A' -> 0
+'C' -> 1
+'G' -> 2
+'T' -> 3
+```
+### Bitpacking
+```
+The integer indices are then packed into a more compact form using bitpacking. This reduces the amount of space needed to store the data.
+For four nucleotides, each represented by 2 bits, they can be packed into a single byte (8 bits).
+```
+### HDF5 Storage with Compression
+The processed data is stored in HDF5 format using the lzf compression algorithm, which provides a good balance between compression efficiency and read/write speed.
+HDF5 automatically handles chunking unless explicitly specified, allowing for efficient storage and retrieval.
+```
 ## Usage
 
 You can run the pipeline using the command line interface with the following options.
