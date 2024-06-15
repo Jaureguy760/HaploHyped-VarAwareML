@@ -55,7 +55,11 @@ def genotype_VCF2hdf5(data_path, donor_id, chromosome, save_path, study_name):
 
     df_genotypes = df.select(genotype_cols).apply(lambda x: x if isinstance(x, str) and '|' in x else None)
     df_positions = df.select(['#CHROM', 'POS', 'ID', 'REF', 'ALT'])
-
+    
+    df_positions = df_positions.with_columns([
+        pl.col('REF').apply(nucleotide_to_index).alias('REF_IDX'),
+        pl.col('ALT').apply(nucleotide_to_index).alias('ALT_IDX')
+    ])
     merged_df = pl.concat([df_positions, df_genotypes], how='horizontal')
 
     with h5py.File(tmp_h5_file, 'a') as h5_gen_file:
