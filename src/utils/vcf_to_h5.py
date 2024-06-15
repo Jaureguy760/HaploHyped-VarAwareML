@@ -6,6 +6,7 @@ import numpy as np
 from multiprocessing import Pool, cpu_count
 import gzip
 import shutil
+from utils.common_utils import nucleotide_to_index, bitpack_indices
 
 def read_sample_list(sample_list_path):
     with open(sample_list_path, 'r') as f:
@@ -27,32 +28,6 @@ def store_individuals(data_path, save_path, study_name):
         if 'individuals' in h5_gen_file:
             del h5_gen_file['individuals']
         h5_gen_file.create_dataset('individuals', data=np.array(individuals, dtype='S'), compression='gzip', compression_opts=5)
-
-def nucleotide_to_index(seq):
-    """
-    Convert a DNA sequence to integer indices.
-    
-    Parameters:
-    seq (str): A string representing a DNA sequence.
-    
-    Returns:
-    np.array: An array of integers representing the indices of nucleotides.
-    """
-    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
-    return np.array([mapping[nuc] for nuc in seq], dtype=np.int8)
-
-def bitpack_indices(indices):
-    """
-    Pack nucleotide indices into a 2-bit representation.
-    
-    Parameters:
-    indices (np.array): Array of nucleotide indices.
-    
-    Returns:
-    np.array: Packed array of indices in 2-bit representation.
-    """
-    packed = np.packbits(indices.reshape(-1, 4), axis=-1, bitorder='little')
-    return packed
 
 def genotype_VCF2hdf5(data_path, donor_id, chromosome, save_path, study_name):
     """
