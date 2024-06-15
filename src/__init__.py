@@ -1,13 +1,5 @@
-"""
-HaploHyped-VarAwareML
+# src/utils/__init__.py
 
-This package provides tools for processing genomic data, converting VCF files to HDF5 format,
-and performing on-the-fly haplotype encoding for machine learning.
-"""
-
-# Optionally, you can import important submodules here for easier access
-# from .utils import vcf_to_h5, fasta_encoder, h5_reader
-# from .datasets import haplotype_dataset
-# from .dataloaders import dataloader
-# from .models import model
-# from .training import train
+from .vcf_to_h5 import read_sample_list, store_individuals, genotype_VCF2hdf5, process_chromosome, merge_h5_files
+from .fasta_encoder import ReferenceGenome
+from .common_utils import nucleotide_to_index, bitpack_indices, parse_encode_dict
