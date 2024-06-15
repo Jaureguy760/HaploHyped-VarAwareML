@@ -70,11 +70,3 @@ For four nucleotides, each represented by 2 bits, they can be packed into a sing
 The processed data is stored in HDF5 format using the lzf compression algorithm, which provides a good balance between compression efficiency and read/write speed.
 HDF5 automatically handles chunking unless explicitly specified, allowing for efficient storage and retrieval.
 ```
-## Usage
-
-You can run the pipeline using the command line interface with the following options.
-
-### VCF to HDF5 Conversion
-
-```bash
-haplohyped convert --vcf data/example.vcf.gz --cohort_name YourStudy --outdir data/output
