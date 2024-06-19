@@ -110,7 +110,7 @@ def genotype_VCF2hdf5(data_path, donor_id, chromosome, save_path, study_name):
             if 'genotype' in group:
                 del group['genotype']
             packed_genotypes = bitpack_indices(merged_df.select(genotype_cols).to_numpy().astype(np.int8))
-            group.create_dataset('genotype', data=packed_genotypes, compression='lzf', chunks=True)
+            group.create_dataset('genotype', data=packed_genotypes, compression='lzf')  # Auto-chunking by default
         logger.info(f"Finished processing VCF file for donor {donor_id} and chromosome {chromosome}")
     except Exception as e:
         logger.error(f"An error occurred while processing VCF file: {e}")
