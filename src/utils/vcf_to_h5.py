@@ -37,6 +37,9 @@ def read_sample_list(sample_list_path):
     except FileNotFoundError as e:
         logger.error(f"Sample list file not found: {e}")
         raise
+    except Exception as e:
+        logger.error(f"An error occurred while reading the sample list: {e}")
+        raise
 
 def store_individuals(data_path, save_path, study_name):
     """
@@ -51,11 +54,15 @@ def store_individuals(data_path, save_path, study_name):
     h5_file = os.path.join(save_path, f'{study_name}.h5')
     individuals = read_sample_list(data_path)
     
-    with h5py.File(h5_file, 'a') as h5_gen_file:
-        if 'individuals' in h5_gen_file:
-            del h5_gen_file['individuals']
-        h5_gen_file.create_dataset('individuals', data=np.array(individuals, dtype='S'), compression='gzip', compression_opts=5)
-    logger.info("Finished storing individuals")
+    try:
+        with h5py.File(h5_file, 'a') as h5_gen_file:
+            if 'individuals' in h5_gen_file:
+                del h5_gen_file['individuals']
+            h5_gen_file.create_dataset('individuals', data=np.array(individuals, dtype='S'), compression='gzip', compression_opts=5)
+        logger.info("Finished storing individuals")
+    except Exception as e:
+        logger.error(f"An error occurred while storing individuals: {e}")
+        raise
 
 def genotype_VCF2hdf5(data_path, donor_id, chromosome, save_path, study_name):
     """
@@ -71,39 +78,43 @@ def genotype_VCF2hdf5(data_path, donor_id, chromosome, save_path, study_name):
     logger.info(f"Processing VCF file {data_path} for donor {donor_id} and chromosome {chromosome}")
     tmp_h5_file = os.path.join(save_path, f'{study_name}_tmp_{donor_id}_{chromosome}.h5')
 
-    # Read column names from VCF header
-    columns = []
-    with gzip.open(data_path, 'rt') as file:
-        for line in file:
-            if line.startswith('#CHROM'):
-                columns = line.strip().split('\t')
-                break
+    try:
+        # Read column names from VCF header
+        columns = []
+        with gzip.open(data_path, 'rt') as file:
+            for line in file:
+                if line.startswith('#CHROM'):
+                    columns = line.strip().split('\t')
+                    break
 
-    # Read VCF data into DataFrame
-    df = pl.read_csv(data_path, sep='\t', comment='#', compression='gzip', has_header=False)
-    df.columns = columns
-    genotype_cols = columns[9:]
+        # Read VCF data into DataFrame
+        df = pl.read_csv(data_path, sep='\t', comment='#', compression='gzip', has_header=False)
+        df.columns = columns
+        genotype_cols = columns[9:]
 
-    # Filter and transform genotype data
-    df_genotypes = df.select(genotype_cols).apply(lambda x: x if isinstance(x, str) and '|' in x else None)
-    df_positions = df.select(['#CHROM', 'POS', 'ID', 'REF', 'ALT'])
-    
-    # Convert nucleotides to indices
-    df_positions = df_positions.with_columns([
-        pl.col('REF').apply(nucleotide_to_index).alias('REF_IDX'),
-        pl.col('ALT').apply(nucleotide_to_index).alias('ALT_IDX')
-    ])
-    merged_df = pl.concat([df_positions, df_genotypes], how='horizontal')
+        # Filter and transform genotype data
+        df_genotypes = df.select(genotype_cols).apply(lambda x: x if isinstance(x, str) and '|' in x else None)
+        df_positions = df.select(['#CHROM', 'POS', 'ID', 'REF', 'ALT'])
+        
+        # Convert nucleotides to indices
+        df_positions = df_positions.with_columns([
+            pl.col('REF').apply(nucleotide_to_index).alias('REF_IDX'),
+            pl.col('ALT').apply(nucleotide_to_index).alias('ALT_IDX')
+        ])
+        merged_df = pl.concat([df_positions, df_genotypes], how='horizontal')
 
-    # Store genotype data into HDF5
-    with h5py.File(tmp_h5_file, 'a') as h5_gen_file:
-        group_path = f'donor_{donor_id}/chr_{chromosome}'
-        group = h5_gen_file.require_group(group_path)
-        if 'genotype' in group:
-            del group['genotype']
-        packed_genotypes = bitpack_indices(merged_df.select(genotype_cols).to_numpy().astype(np.int8))
-        group.create_dataset('genotype', data=packed_genotypes, compression='lzf', chunks=True)
-    logger.info(f"Finished processing VCF file for donor {donor_id} and chromosome {chromosome}")
+        # Store genotype data into HDF5
+        with h5py.File(tmp_h5_file, 'a') as h5_gen_file:
+            group_path = f'donor_{donor_id}/chr_{chromosome}'
+            group = h5_gen_file.require_group(group_path)
+            if 'genotype' in group:
+                del group['genotype']
+            packed_genotypes = bitpack_indices(merged_df.select(genotype_cols).to_numpy().astype(np.int8))
+            group.create_dataset('genotype', data=packed_genotypes, compression='lzf', chunks=True)
+        logger.info(f"Finished processing VCF file for donor {donor_id} and chromosome {chromosome}")
+    except Exception as e:
+        logger.error(f"An error occurred while processing VCF file: {e}")
+        raise
 
 def process_chromosome(chromosome, vcf_dir, out_dir, study_name, donor_ids):
     """
@@ -130,20 +141,24 @@ def merge_h5_files(tmp_dir, final_h5_file):
     final_h5_file (str): Path to the final HDF5 file.
     """
     logger.info(f"Merging HDF5 files from {tmp_dir} to {final_h5_file}")
-    with h5py.File(final_h5_file, 'a') as final_file:
-        for tmp_file in os.listdir(tmp_dir):
-            if tmp_file.endswith(".h5"):
-                tmp_file_path = os.path.join(tmp_dir, tmp_file)
-                with h5py.File(tmp_file_path, 'r') as tmp:
-                    for donor in tmp.keys():
-                        if donor not in final_file:
-                            final_file.create_group(donor)
-                        for chrom in tmp[donor].keys():
-                            group_path = f"{donor}/{chrom}"
-                            if group_path in final_file:
-                                del final_file[group_path]
-                            tmp.copy(f"{donor}/{chrom}", final_file)
-    logger.info("Finished merging HDF5 files")
+    try:
+        with h5py.File(final_h5_file, 'a') as final_file:
+            for tmp_file in os.listdir(tmp_dir):
+                if tmp_file.endswith(".h5"):
+                    tmp_file_path = os.path.join(tmp_dir, tmp_file)
+                    with h5py.File(tmp_file_path, 'r') as tmp:
+                        for donor in tmp.keys():
+                            if donor not in final_file:
+                                final_file.create_group(donor)
+                            for chrom in tmp[donor].keys():
+                                group_path = f"{donor}/{chrom}"
+                                if group_path in final_file:
+                                    del final_file[group_path]
+                                tmp.copy(f"{donor}/{chrom}", final_file)
+        logger.info("Finished merging HDF5 files")
+    except Exception as e:
+        logger.error(f"An error occurred while merging HDF5 files: {e}")
+        raise
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Script to convert VCF data')
