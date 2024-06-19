@@ -55,7 +55,3 @@ class ReferenceGenome:
         with h5py.File(out_h5, 'w') as f:
             for chrom, encoded_seq in self.onehot_dict.items():
                 f.create_dataset(chrom, data=encoded_seq, compression='lzf')
-
-# Example usage:
-# reference_genome = ReferenceGenome('path_to_fasta_file.fasta')
-# reference_genome.save_to_h5('output_file.h5')
