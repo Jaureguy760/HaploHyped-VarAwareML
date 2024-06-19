@@ -7,20 +7,30 @@ from multiprocessing import Pool, cpu_count
 import gzip
 import shutil
 from utils.common_utils import nucleotide_to_index, bitpack_indices
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,  # Set the logging level
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Log message format
+    handlers=[
+        logging.FileHandler("haplohyped.log"),  # Log to a file
+        logging.StreamHandler()  # Log to the console
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 def read_sample_list(sample_list_path):
-    with open(sample_list_path, 'r') as f:
-        return [line.strip() for line in f]
+    try:
+        with open(sample_list_path, 'r') as f:
+            return [line.strip() for line in f]
+    except FileNotFoundError as e:
+        logger.error(f"Sample list file not found: {e}")
+        raise
 
 def store_individuals(data_path, save_path, study_name):
-    """
-    Store individual sample names into an HDF5 file with compression.
-    
-    Parameters:
-    data_path (str): Path to the sample list file.
-    save_path (str): Path to save the HDF5 file.
-    study_name (str): Name of the study.
-    """
+    logger.info(f"Storing individuals from {data_path} to {save_path}")
     h5_file = os.path.join(save_path, f'{study_name}.h5')
     individuals = read_sample_list(data_path)
     
@@ -28,18 +38,10 @@ def store_individuals(data_path, save_path, study_name):
         if 'individuals' in h5_gen_file:
             del h5_gen_file['individuals']
         h5_gen_file.create_dataset('individuals', data=np.array(individuals, dtype='S'), compression='gzip', compression_opts=5)
+    logger.info("Finished storing individuals")
 
 def genotype_VCF2hdf5(data_path, donor_id, chromosome, save_path, study_name):
-    """
-    Process VCF file and store genotype data into an HDF5 file with compression.
-    
-    Parameters:
-    data_path (str): Path to the input VCF file.
-    donor_id (int): Identifier for the donor.
-    chromosome (int): Chromosome number.
-    save_path (str): Path to save the HDF5 file.
-    study_name (str): Name of the study.
-    """
+    logger.info(f"Processing VCF file {data_path} for donor {donor_id} and chromosome {chromosome}")
     tmp_h5_file = os.path.join(save_path, f'{study_name}_tmp_{donor_id}_{chromosome}.h5')
 
     columns = []
@@ -69,30 +71,16 @@ def genotype_VCF2hdf5(data_path, donor_id, chromosome, save_path, study_name):
             del group['genotype']
         packed_genotypes = bitpack_indices(merged_df.select(genotype_cols).to_numpy().astype(np.int8))
         group.create_dataset('genotype', data=packed_genotypes, compression='lzf', chunks=True)
+    logger.info(f"Finished processing VCF file for donor {donor_id} and chromosome {chromosome}")
 
 def process_chromosome(chromosome, vcf_dir, out_dir, study_name, donor_ids):
-    """
-    Process a single chromosome's VCF file and store the data into HDF5 files.
-    
-    Parameters:
-    chromosome (int): Chromosome number to process.
-    vcf_dir (str): Directory containing VCF files.
-    out_dir (str): Directory to save the output HDF5 files.
-    study_name (str): Name of the study.
-    donor_ids (list): List of donor IDs to process.
-    """
+    logger.info(f"Processing chromosome {chromosome} for donors {donor_ids}")
     vcf_file = os.path.join(vcf_dir, f'chr{chromosome}.filtered.vcf.gz')
     for donor_id in donor_ids:
         genotype_VCF2hdf5(vcf_file, donor_id, chromosome, out_dir, study_name)
 
 def merge_h5_files(tmp_dir, final_h5_file):
-    """
-    Merge temporary HDF5 files into a single final HDF5 file.
-    
-    Parameters:
-    tmp_dir (str): Directory containing temporary HDF5 files.
-    final_h5_file (str): Path to the final HDF5 file.
-    """
+    logger.info(f"Merging HDF5 files from {tmp_dir} to {final_h5_file}")
     with h5py.File(final_h5_file, 'a') as final_file:
         for tmp_file in os.listdir(tmp_dir):
             if tmp_file.endswith(".h5"):
@@ -106,6 +94,7 @@ def merge_h5_files(tmp_dir, final_h5_file):
                             if group_path in final_file:
                                 del final_file[group_path]
                             tmp.copy(f"{donor}/{chrom}", final_file)
+    logger.info("Finished merging HDF5 files")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Script to convert VCF data')
