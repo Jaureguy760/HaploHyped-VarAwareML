@@ -1,42 +1,14 @@
 name: haplohyped-env
 channels:
-  - defaults
   - conda-forge
-  - bioconda
-  - r
-  - anaconda
+  - defaults
 dependencies:
   - python=3.8
-  - click
-  - pytorch
-  - torchvision
-  - cudatoolkit
-  - h5py=2.10.0  # Version compatibility with the old environment
-  - cupy
-  - pandas
-  - seaborn
-  - bcftools=1.9
-  - tabix=0.2.6
-  - openjdk=8.0.112  # Java dependencies
-  - vcftools=0.1.14
-  - gcc_linux-64=7.3.0
-  - gfortran_linux-64=7.3.0
-  - r-base=3.6.1
-  - r-data.table=1.12.2
-  - r-stringr=1.4.0
-  - gawk=5.0.1
-  - coreutils=8.31
-  - bitarray=1.0.1
-  - Cython=0.29.13
-  - numpy=1.16.2  # Fixed version for compatibility
-  - scipy=1.2.1  # Fixed version for compatibility
-  - pytables
-  - natsort
-  - pycryptodomex=3.9.7
+  - polars
+  - h5py
+  - numpy
+  - pysam
+  - hdf5plugin
   - pip
   - pip:
-      - nextflow
-      - scikit-learn
-      - pyvcf
-      - matplotlib
-prefix: ./haplohyped-env
+    - b2h5py
