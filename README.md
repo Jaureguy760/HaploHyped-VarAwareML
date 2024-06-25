@@ -22,7 +22,6 @@ The HaploHyped VarAwareML Pipeline is an integrated, end-to-end solution for pro
 
 - Conda
 - CUDA for GPU acceleration
-- Nextflow
 
 ### Steps
 
