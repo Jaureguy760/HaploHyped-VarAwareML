@@ -1,7 +1,4 @@
-# VCFtoHDF5Converter/vcf_to_hdf5.py
-
 import os
-import parse_vcf
 import polars as pl
 import h5py
 import numpy as np
@@ -10,10 +7,11 @@ import time
 import shutil
 import hdf5plugin
 import b2h5py.auto
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from typing import List
 import click
+import parse_vcf  # Ensure this module is available in your environment
 
 # Configure logging
 logging.basicConfig(
@@ -78,7 +76,7 @@ class VCFtoHDF5Converter:
             logger.error(f"An error occurred while reading the sample list: {e}")
             raise
 
-    def genotype_VCF2hdf5(self, data_path: str, donor_id: str, chromosome: int) -> None:
+    def genotype_vcf_to_hdf5(self, data_path: str, donor_id: str, chromosome: int) -> None:
         """
         Convert VCF data to HDF5 format for a specific donor and chromosome.
 
@@ -90,7 +88,6 @@ class VCFtoHDF5Converter:
         Raises:
             Exception: For any error during VCF processing or HDF5 file creation.
         """
-        # Set the number of threads for C++ code
         os.environ["OMP_NUM_THREADS"] = str(self.cxx_threads)
         os.environ["MKL_NUM_THREADS"] = str(self.cxx_threads)
         
@@ -101,7 +98,6 @@ class VCFtoHDF5Converter:
             chrom_str = f"chr{chromosome}"
             
             if donor_id:
-                # Load VCF data using the parse_vcf module
                 results = parse_vcf.load_vcf(data_path, donor_id, chrom_str)
                 columns = ["chrom", "start", "stop", "ref", "alt", "phase1", "phase2"]
                 snp_df = pl.DataFrame({
@@ -132,7 +128,6 @@ class VCFtoHDF5Converter:
 
                 snp_struct = np.array([tuple(row) for row in snp_df.iter_rows()], dtype=dtype)
 
-                # Write data to HDF5 file
                 with h5py.File(tmp_h5_file, 'w') as h5_gen_file:
                     group_path = f'donor_{donor_id}/chr_{chromosome}'
                     group = h5_gen_file.create_group(group_path)
@@ -154,7 +149,7 @@ class VCFtoHDF5Converter:
         logger.info(f"Processing donor {donor_id}")
         for chromosome in self.chromosomes:
             vcf_file = os.path.join(self.vcf_dir, f'chr{chromosome}.filtered.vcf.gz')
-            self.genotype_VCF2hdf5(vcf_file, donor_id, chromosome)
+            self.genotype_vcf_to_hdf5(vcf_file, donor_id, chromosome)
 
     def merge_h5_files(self) -> None:
         """
@@ -193,7 +188,7 @@ class VCFtoHDF5Converter:
         try:
             process_donor_partial = partial(self.process_donor)
 
-            with ProcessPoolExecutor(max_workers=self.cores) as executor:
+            with ThreadPoolExecutor(max_workers=self.cores) as executor:
                 executor.map(process_donor_partial, self.donor_ids)
 
             merge_start_time = time.time()

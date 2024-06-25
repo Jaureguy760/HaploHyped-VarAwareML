@@ -1,7 +1,10 @@
 # HaploHyped VarAwareML Pipeline
-<img src="https://github.com/Jaureguy760/HaploHyped-VarAwareML/blob/main/haplohyped.png" alt="HaploHyped VarAware ML PIPELINE Logo" width="400"/>
+
+<img src="haplohyped.png" alt="HaploHyped VarAware ML PIPELINE Logo" width="400"/>
 
 The HaploHyped VarAwareML Pipeline is an integrated, end-to-end solution for processing genomic data, converting VCF files to HDF5 format, and performing GPU-accelerated on-the-fly haplotype encoding for machine learning.
+
+**Note:** This code was rewritten and optimized by software developer Aaron Ho.
 
 ## Features
 
@@ -10,10 +13,10 @@ The HaploHyped VarAwareML Pipeline is an integrated, end-to-end solution for pro
 - Efficient data storage with HDF5
 - GPU-accelerated on-the-fly haplotype encoding
 - Seamless integration with PyTorch for ML
+- C++ integration for high-performance VCF file manipulation using `vcfpp`
+- Python bindings for C++ code using `pybind11`
 
 ## Installation
-
-Follow these steps to install the HaploHyped VarAwareML Pipeline.
 
 ### Prerequisites
 
@@ -43,43 +46,64 @@ Follow these steps to install the HaploHyped VarAwareML Pipeline.
     pip install -e .
     ```
 
-
-
-## How to Run the Pipeline
+## Usage
 
 ### Data Processing Script
 
-The main script for converting VCF data to HDF5 format and processing the data is `process_vcf.py`. This script can handle storing individuals and chunk-wise processing.
+The main script for converting VCF data to HDF5 format and processing the data is `vcf_to_h5.py`. This script can handle storing individuals and chunk-wise processing.
 
 ### Usage
 
-1. **Store Individuals:**
-   
-    This step stores the individual sample names into an HDF5 file with compression.
 
-    ```bash
-    python process_vcf.py --cohort_name <cohort_name> --vcf <vcf_directory> --outdir <output_directory> --flag individuals --sample_list <sample_list_file>
-    ```
+1. **Process VCF to HDF5 (Chunk-wise):**
 
-2. **Process VCF to HDF5 (Chunk-wise):**
-   
     This step processes the VCF file and stores the genotype data into HDF5 files with compression.
 
     ```bash
-    python process_vcf.py --cohort_name <cohort_name> --vcf <vcf_directory> --outdir <output_directory> --flag chunk --sample_list <sample_list_file>
+    vcf_to_h5 --cohort_name <cohort_name> --vcf <vcf_directory> --outdir <output_directory> --sample_list <sample_list_file> --cores <number_of_cores> --cxx_threads <number_of_threads>
     ```
-
-### Arguments
-
-- `--cohort_name`: Name of the cohort (required).
-- `--vcf`: Path to the directory containing VCF files (required).
-- `--outdir`: Path to the directory to save the results (required).
-- `--flag`: Type of data to process (`individuals` or `chunk`) (required).
-- `--sample_list`: Path to the sample list file (default: `sample_list.txt`).
 
 ### Example Commands
 
-**Store Individuals:**
+**Process VCF to HDF5:**
 
 ```bash
-python process_vcf.py --cohort_name my_study --vcf /path/to/vcf_files --outdir /path/to/output --flag individuals --sample_list sample_list.txt
+vcf_to_h5 --cohort_name my_study --vcf /path/to/vcf_files --outdir /path/to/output --sample_list sample_list.txt --cores 10 --cxx_threads 4
+```
+
+
+2. **Process VCF to HDF5 (Chunk-wise):**
+
+    This step processes the VCF file and stores the genotype data into HDF5 files with compression.
+
+    ```bash
+    vcf_to_h5 --cohort_name <cohort_name> --vcf <vcf_directory> --outdir <output_directory> --sample_list <sample_list_file> --cores <number_of_cores> --cxx_threads <number_of_threads>
+    ```
+    
+## C++ Integration
+
+This project includes a C++ module for high-performance VCF file manipulation using the `vcfpp` library. The `vcfpp` library provides an easy and safe API for working with VCF/BCF files and is compatible with C++11 and later.
+
+For more information about `vcfpp`, visit the [vcfpp GitHub repository](https://github.com/Zilong-Li/vcfpp).
+
+### Features of `vcfpp`
+
+- Single file for easy inclusion and compilation
+- Easy and safe API
+- RAII (Resource Acquisition Is Initialization) for automatic memory management
+- Full functionalities of `htslib`, including support for compressed VCF/BCF and URL links
+- Compatible with C++11 and later
+
+### Using `pybind11` for Python Bindings
+
+We use `pybind11` to create Python bindings for the C++ code, enabling seamless integration of high-performance C++ functionalities into our Python workflow.
+
+For more information about `vcfpp`, visit the [vcfpp GitHub repository](https://github.com/Zilong-Li/vcfpp).
+
+## Contributing
+
+Please read `CONTRIBUTING.md` for details on our code of conduct, and the process for submitting pull requests to us.
+
+## License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details.

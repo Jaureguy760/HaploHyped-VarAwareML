@@ -1,5 +1,12 @@
 #!/bin/bash
 
+
+
+
+
+
+
+
 set -e
 
 LOGFILE="setup_and_run.log"
@@ -55,3 +62,7 @@ echo "Setting PYTHONPATH..."
 export PYTHONPATH=/iblm/netapp/data4/jjaureguy/vcf_cuda/HaploHyped-VarAwareML/cpp/build:$PYTHONPATH
 
 echo "Setup and execution complete. The C++ program and Python module have been compiled successfully, and the Python script has been executed."
+
+
+
+
