@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 from .common_utils import unpack_bitpacked_data, nucleotide_to_index, parse_encode_dict
 
-class HDF5Reader:
+class VCFH5Reader:
     """
     A class to read and fetch genotype data from HDF5 files.
 
@@ -11,8 +11,9 @@ class HDF5Reader:
     """
     
     def __init__(self, h5_file):
+        self.hdf5_file = h5py.File(h5_file, 'r')
         """
-        Initialize the HDF5Reader with the path to the HDF5 file.
+        Initialize the VCFH5Reader with the path to the HDF5 file.
 
         Parameters:
         h5_file (str): Path to the HDF5 file.
@@ -36,8 +37,10 @@ class HDF5Reader:
         with h5py.File(self.h5_file, 'r') as f:
             group_path = f'donor_{donor_id}/chr_{chromosome}'
             if group_path in f:
-                packed_data = f[group_path]['genotype'][()]
-                unpacked_data = unpack_bitpacked_data(packed_data)
-                return unpacked_data
+                genotype = f[group_path]['genotype'][()]
+                return genotype
             else:
                 raise KeyError(f"No data found for {group_path}")
+    
+    def close(self):
+        self.hdf5_file.close()

@@ -1,4 +1,4 @@
-name: haplohyped-env
+name: HaploHyped-VarAwareML
 channels:
   - conda-forge
   - defaults
@@ -9,6 +9,17 @@ dependencies:
   - numpy
   - pysam
   - hdf5plugin
+  - cmake
+  - make
+  - gcc_linux-64
+  - gxx_linux-64
+  - htslib
+  - pybind11
+  - xz
+  - zlib
+  - gdb
   - pip
+  - click
+  - setuptools
   - pip:
     - b2h5py
