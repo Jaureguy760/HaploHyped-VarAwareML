@@ -97,7 +97,7 @@ For more information about `vcfpp`, visit the [vcfpp GitHub repository](https://
 
 We use `pybind11` to create Python bindings for the C++ code, enabling seamless integration of high-performance C++ functionalities into our Python workflow.
 
-For more information about `vcfpp`, visit the [vcfpp GitHub repository](https://github.com/Zilong-Li/vcfpp).
+For more information about `pybind11`, visit the [pybind11 GitHub repository](https://github.com/pybind/pybind11).
 
 ## Contributing
 
