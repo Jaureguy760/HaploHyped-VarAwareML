@@ -1,0 +1,28 @@
+# Development Dependencies
+-r requirements.txt
+
+# Testing
+pytest>=7.0
+pytest-cov>=4.0
+pytest-xdist>=3.0  # Parallel testing
+
+# Code Quality
+black>=22.0
+flake8>=5.0
+mypy>=1.0
+isort>=5.0
+pylint>=2.15
+
+# Documentation
+sphinx>=5.0
+sphinx-rtd-theme>=1.0
+myst-parser>=0.18  # Markdown support in Sphinx
+
+# Jupyter
+jupyter>=1.0
+ipykernel>=6.0
+matplotlib>=3.5
+seaborn>=0.12
+
+# Pre-commit hooks
+pre-commit>=3.0
