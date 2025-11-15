@@ -22,7 +22,7 @@
 
 HaploHyped VarAwareML is a production-ready, end-to-end pipeline for processing genomic variant data (VCF files) into optimized HDF5 format for machine learning applications. Built with performance and scalability in mind, it leverages C++ for VCF parsing and Blosc2 compression for efficient storage and retrieval.
 
-**Developed by:** Aaron Ho (Software Engineering) & Juan Jaureguy (Genomics Research)
+**Developed by:** Jeff Jaureguy
 
 ### Key Highlights
 
