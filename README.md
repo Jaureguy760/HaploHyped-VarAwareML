@@ -346,7 +346,7 @@ If you use this pipeline in your research, please cite:
 ```bibtex
 @software{haplohyped2024,
   title={HaploHyped VarAwareML: High-Performance Genomic Data Pipeline},
-  author={Ho, Aaron and Jaureguy, Juan},
+  author={Ho, Aaron and Jaureguy, Jeff},
   year={2024},
   url={https://github.com/Jaureguy760/HaploHyped-VarAwareML}
 }
