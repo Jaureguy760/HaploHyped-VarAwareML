@@ -1,0 +1,9 @@
+{
+  "enabledPlugins": [
+    "@anthropic/scientific-skills",
+    "@anthropic/kdense-data-science",
+    "velocity-workflow",
+    "@anthropic/huggingface-skills"
+  ],
+  "env": {}
+}
